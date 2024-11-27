@@ -1,4 +1,11 @@
 <script>
+	import Loading from '../../components/Loading.svelte';
+	// get id from query
+	const id = new URLSearchParams(window.location.search).get('id')
+	if (!id) {
+		throw new Error('id is required');
+	}
+
 	// get match histories
 	const generatePlayer = () => {
 		return {
@@ -7,9 +14,11 @@
 			score: Math.floor(Math.random() * 10)
 		};
 	};
-	const data = fetch('https://api.opendota.com/api/players/123/matches')
+
+	const data = fetch(`/api/matches/${id}`)
 		.then(response => response.json())
-		.then(data => {
+		.catch(data => {
+
 			return {
 				name: '포켓몬 카드 게임 대회 1회',
 				rounds: [
@@ -72,7 +81,9 @@
 
 <div>
 	{#await data}
-		<p>Loading...</p>
+		<div class="fixed text-center w-full h-full">
+			<Loading />
+		</div>
 	{:then value}
 		<h1 class="mb-8">{value.name}</h1>
 		<div class="flex gap-4 justify-center">
@@ -119,31 +130,31 @@
 </div>
 
 <style>
-	.is_finished_round {
-		h2 {
-			@apply text-green-500;
-		}
-	}
-
-  .is_finished_match {
-		@apply bg-zinc-300;
-	}
-
-  .is_not_finished_round {
-		h2 {
-    	@apply text-orange-400;
-		}
+  .is_finished_round {
+    h2 {
+      @apply text-green-500;
+    }
   }
 
-	.is_not_finished_round .is_not_finished_match {
-		@apply bg-orange-300;
+  .is_finished_match {
+    @apply bg-zinc-300;
+  }
+
+  .is_not_finished_round {
+    h2 {
+      @apply text-orange-400;
+    }
+  }
+
+  .is_not_finished_round .is_not_finished_match {
+    @apply bg-orange-300;
   }
 
   .is_not_finished_round .is_finished_match {
     @apply bg-blue-300;
   }
 
-	.disabled {
-		@apply bg-gray-500;
-	}
+  .disabled {
+    @apply bg-gray-500;
+  }
 </style>

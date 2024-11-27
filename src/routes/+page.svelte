@@ -33,7 +33,7 @@
 			.catch(() => {
 			return { id: crypto.randomUUID() };
 		});
-		await goto(`/match/${data.id}`);
+		await goto(`/match?id=${data.id}`);
 	};
 
 </script>

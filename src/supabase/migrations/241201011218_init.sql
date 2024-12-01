@@ -14,7 +14,6 @@ create table rounds
     round_number integer not null,
     room_id      uuid references rooms (id),
     created_at   timestamp with time zone default now(),
-    finished_at  timestamp with time zone,
 
     unique (round_number, room_id)
 );
@@ -38,5 +37,4 @@ create table matches
     player1_score integer,
     player2_score integer,
     created_at    timestamp with time zone default now(),
-    finished_at   timestamp with time zone
 );

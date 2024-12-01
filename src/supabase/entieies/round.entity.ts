@@ -1,12 +1,11 @@
 import type { Room } from './room.entity';
 import { BaseEntity } from './base.entity';
-import type { Match } from './match.entity';
+import { Match } from './match.entity';
 
 export class Round extends BaseEntity {
 	round_number: number;
 	room: Room;
 	room_id: string;
-	finished_at?: Date;
 
 	matches: Match[];
 
@@ -22,5 +21,10 @@ export class Round extends BaseEntity {
 	get dbValues() {
 		const { room: _, matches: __, ...values } = this;
 		return values;
+	}
+
+	static isFinished(round: Partial<Round>) {
+		if (!round) return false;
+		return round.matches?.every((match) => Match.isFinished(match));
 	}
 }

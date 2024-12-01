@@ -12,5 +12,7 @@
   <div id="header" class="flex py-2 mb-12">
     <div class="mx-auto text-6xl"><a style="text-decoration: none" href="/">Match Maker</a></div>
   </div>
-  <slot/>
+  <div class="pb-8">
+    <slot/>
+  </div>
 </QueryClientProvider>

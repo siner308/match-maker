@@ -8,8 +8,7 @@ import { queryClient } from '../tanstack/query-client';
 export const createRoom = (onSuccess: (room: Room) => unknown) => {
 	return createMutation<Room, Error, string>({
 		mutationFn: async (name) => {
-			const room = new Room();
-			room.name = name;
+			const room = new Room({ name });
 
 			if (await roomRepo.findByName(name)) {
 				throw new Error(`Room with name ${name} already exists`);
@@ -41,10 +40,7 @@ export const addPlayer = (roomId: string) => {
 				throw new Error(`Player with name ${name} already exists`);
 			}
 
-			const player = new Player();
-			player.name = name;
-			player.room_id = roomId;
-
+			const player = new Player({ room_id: roomId, name });
 			await playerRepo.save(player);
 		},
 		onSuccess: () => {

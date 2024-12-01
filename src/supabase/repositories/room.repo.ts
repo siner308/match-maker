@@ -58,10 +58,9 @@ class RoomRepo {
 		data.rounds.sort((a, b) => a.round_number - b.round_number);
 		data.rounds.forEach((round) => {
 			round.matches.sort((a, b) => {
-				if (!a.finished_at && !b.finished_at) return 0;
-				if (!a.finished_at) return 1;
-				if (!b.finished_at) return -1;
-				return a.finished_at.getTime() - b.finished_at.getTime();
+				if (Match.isFinished(a) && !Match.isFinished(b)) return 1;
+				if (!Match.isFinished(a) && Match.isFinished(b)) return -1;
+				return 0;
 			});
 		});
 		return data;
@@ -70,32 +69,32 @@ class RoomRepo {
 	async startRound(roomId: string) {
 		const room = await this.getDetailById(roomId);
 		const isRecentRoundNotFinished =
-			room.rounds.length && !room.rounds?.[room.rounds.length - 1]?.finished_at;
+			room.rounds.length && !Round.isFinished(room.rounds?.[room.rounds.length - 1]);
 		if (isRecentRoundNotFinished) {
 			throw new Error('Recent round is not finished');
 		}
 		const round = new Round(room);
 		round.round_number = room.rounds.length + 1;
-		debugger;
 
 		const { data, error }: PostgrestSingleResponse<Round> = await this.supabase
 			.from('rounds')
 			.insert(round.dbValues)
 			.single();
 		if (error) throw error;
-		debugger;
 
 		// create matches
+
+		// select active players
 		const players: PostgrestResponse<Player> = await this.supabase
 			.from('players')
 			.select('*')
-			.eq('room_id', roomId);
+			.eq('room_id', roomId)
+			.eq('disabled', false);
 		if (players.error) {
 			// rollback
 			await this.supabase.from('rounds').delete().eq('id', data.id);
 			throw players.error;
 		}
-		debugger;
 
 		// swiss system pairing. match from last round score
 		// new player is inserted at the end of the list
@@ -107,7 +106,6 @@ class RoomRepo {
 		if (sortedPlayers.length % 2 === 1) {
 			sortedPlayers.pop();
 		}
-		debugger;
 
 		const matchIds: string[] = [];
 		for (let i = 0; i < sortedPlayers.length; i += 2) {
@@ -130,7 +128,7 @@ class RoomRepo {
 			(m) => m.player1_id === player.id || m.player2_id === player.id
 		);
 		if (!match) return 0;
-		if (!match.finished_at) return 0;
+		if (!Match.isFinished(match)) return 0;
 
 		return match.player1_id === player.id
 			? (match.player1_score || 0) - (match.player2_score || 0)

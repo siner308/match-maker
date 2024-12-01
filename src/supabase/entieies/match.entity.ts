@@ -1,6 +1,6 @@
 import { BaseEntity } from './base.entity';
 import type { Round } from './round.entity';
-import type { Player } from './player.entity';
+import { Player } from './player.entity';
 
 export class Match extends BaseEntity {
 	round: Round;
@@ -11,7 +11,6 @@ export class Match extends BaseEntity {
 	player2: Player;
 	player2_id: string;
 	player2_score?: number;
-	finished_at?: Date;
 
 	constructor(round: Round, player1: Player, player2: Player) {
 		super();
@@ -27,5 +26,10 @@ export class Match extends BaseEntity {
 	get dbValues() {
 		const { round: _, player1: __, player2: ___, ...values } = this;
 		return values;
+	}
+
+	static isFinished(data: Partial<Match>) {
+		if (!data) return false;
+		return data.player1_score != undefined && data.player2_score != undefined;
 	}
 }

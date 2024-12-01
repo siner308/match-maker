@@ -40,7 +40,7 @@ export const addPlayer = (roomId: string) => {
 				throw new Error(`Player with name ${name} already exists`);
 			}
 
-			const player = new Player({ room_id: roomId, name });
+			const player = new Player(roomId, name);
 			await playerRepo.save(player);
 		},
 		onSuccess: () => {

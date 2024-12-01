@@ -17,7 +17,7 @@ jobs:
           node-version: 20.11.1
           cache: 'pnpm'
 
-      - run: copy .env.production .env
+      - run: cp .env.production .env
       - run: pnpm i && pnpm run build
 
       - name: Sync to S3

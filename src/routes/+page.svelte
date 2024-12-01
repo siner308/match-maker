@@ -1,69 +1,33 @@
 <script lang="ts">
+	import type { Room } from '../supabase/entieies/room.entity';
+
+	let name = $state.raw('');
 	import { goto } from '$app/navigation';
+	import { createRoom } from '../api/api';
 
-	let createMatchModal = $state(false);
-	let searchMatchModal = $state(false);
-
-	const openCreateMatchModal = () => {
-		createMatchModal = !createMatchModal;
-		if (createMatchModal) {
-			searchMatchModal = false;
-		}
-	};
-
-	const openSearchMatchModal = () => {
-		searchMatchModal = !searchMatchModal;
-		if (searchMatchModal) {
-			createMatchModal = false;
-		}
-	};
-
+	const mutation = createRoom(async (room: Room) => {
+		await goto(`/match?id=${room.id}`);
+	});
 	const onSubmitCreateMatch = async (e: Event) => {
 		e.preventDefault();
-		const data = await fetch('/api/match', {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json'
-			},
-			body: JSON.stringify({
-				name: e.target['name'].value
-			})
-		})
-			.then((res) => res.json())
-			.catch(() => {
-			return { id: crypto.randomUUID() };
-		});
-		await goto(`/match?id=${data.id}`);
+		$mutation.mutate(name);
+	};
+
+	const onChange = (e: Event) => {
+		const target = e.target as HTMLInputElement;
+		name = target.value;
 	};
 
 </script>
 
 <main class="flex flex-col items-center p-10 gap-8">
-	<div class="flex gap-8">
-		<button class="button" onclick={openCreateMatchModal}>Create</button>
-		<button class="button" onclick={openSearchMatchModal}>Search</button>
+	<div class="items-center flex flex-col gap-8 bg-gray-500 p-8 rounded-2xl min-w-[50%]">
+		<p class="text-4xl">Create Match</p>
+		<form class="flex flex-col gap-4 w-full">
+			<input class="input" type="text" placeholder="Match Name" onchange={onChange} value="{name}" />
+			<button class="button submit" onclick={onSubmitCreateMatch}>Create</button>
+		</form>
 	</div>
-
-	{#if createMatchModal}
-		<div class="items-center flex flex-col gap-8 bg-gray-500 p-8 rounded-2xl min-w-[50%]">
-			<p class="text-4xl">Create Match</p>
-			<form class="flex flex-col gap-4 w-full">
-				<input class="input" type="text" placeholder="Match Name" />
-				<button class="button submit" onclick={onSubmitCreateMatch}>Create</button>
-			</form>
-		</div>
-	{/if}
-
-	{#if searchMatchModal}
-		<div class="items-center flex flex-col gap-8 bg-gray-500 p-8 rounded-2xl min-w-[50%]">
-			<p class="text-4xl">Search Match</p>
-			<form class="flex flex-col gap-4 w-full">
-				<input class="input" type="text" placeholder="Match Name" />
-				<button class="button submit">Search</button>
-			</form>
-		</div>
-	{/if}
-
 </main>
 
 <style lang="postcss">

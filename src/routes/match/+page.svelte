@@ -71,7 +71,7 @@
           </div>
           {#each round.matches as match}
             <div
-                    class="flex flex-col gap-2 bg-gray-300 p-2 rounded-xl w-32 mx-auto"
+                    class="flex flex-col gap-2 bg-gray-300 p-2 rounded-xl w-40 mx-auto"
                     class:is_finished_match={Match.isFinished(match)}
                     class:is_not_finished_match={!Match.isFinished(match)}
             >

@@ -69,3 +69,19 @@ export const startRound = (roomId: string) => {
 		}
 	});
 };
+
+export const changePlayerActiveState = (roomId: string) => {
+	return createMutation({
+		mutationFn: async ({ playerId, disabled }: { playerId: string; disabled: boolean }) => {
+			const player = await playerRepo.findById(playerId);
+			if (!player) {
+				throw new Error(`Player with id ${playerId} not found`);
+			}
+			player.disabled = disabled;
+			await playerRepo.save(player);
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ['players', roomId] }).catch(console.error);
+		}
+	});
+};

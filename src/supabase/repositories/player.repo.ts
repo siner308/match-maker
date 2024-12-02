@@ -36,6 +36,16 @@ class PlayerRepo {
 
 		return data;
 	}
+
+	async findById(playerId: string): Promise<Player> {
+		const { data, error } = await this.supabase
+			.from('players')
+			.select('*')
+			.eq('id', playerId)
+			.single();
+		if (error) throw error;
+		return data;
+	}
 }
 
 export const playerRepo = new PlayerRepo(supabase);

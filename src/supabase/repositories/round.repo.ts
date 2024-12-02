@@ -1,8 +1,8 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { supabase } from '../client';
 
-class RoundRepo {
+class RoundRepository {
 	constructor(private readonly supabase: SupabaseClient) {}
 }
 
-export const roundRepo = new RoundRepo(supabase);
+export const roundRepo = new RoundRepository(supabase);

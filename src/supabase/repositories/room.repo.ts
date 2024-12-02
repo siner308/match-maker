@@ -1,6 +1,5 @@
 import type { Room } from '../entieies/room.entity';
 import {
-	type PostgrestMaybeSingleResponse,
 	type PostgrestResponse,
 	type PostgrestSingleResponse,
 	SupabaseClient
@@ -10,7 +9,7 @@ import { Round } from '../entieies/round.entity';
 import type { Player } from '../entieies/player.entity';
 import { Match } from '../entieies/match.entity';
 
-class RoomRepo {
+class RoomRepository {
 	constructor(private readonly supabase: SupabaseClient) {}
 
 	async save(room: Room): Promise<Room> {
@@ -58,9 +57,7 @@ class RoomRepo {
 		data.rounds.sort((a, b) => a.round_number - b.round_number);
 		data.rounds.forEach((round) => {
 			round.matches.sort((a, b) => {
-				if (Match.isFinished(a) && !Match.isFinished(b)) return 1;
-				if (!Match.isFinished(a) && Match.isFinished(b)) return -1;
-				return 0;
+				return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
 			});
 		});
 		return data;
@@ -76,14 +73,6 @@ class RoomRepo {
 		const round = new Round(room);
 		round.round_number = room.rounds.length + 1;
 
-		const { data, error }: PostgrestSingleResponse<Round> = await this.supabase
-			.from('rounds')
-			.insert(round.dbValues)
-			.single();
-		if (error) throw error;
-
-		// create matches
-
 		// select active players
 		const players: PostgrestResponse<Player> = await this.supabase
 			.from('players')
@@ -91,9 +80,10 @@ class RoomRepo {
 			.eq('room_id', roomId)
 			.eq('disabled', false);
 		if (players.error) {
-			// rollback
-			await this.supabase.from('rounds').delete().eq('id', data.id);
 			throw players.error;
+		}
+		if (players.data.length < 2) {
+			throw new Error('Not enough players');
 		}
 
 		// swiss system pairing. match from last round score
@@ -101,15 +91,22 @@ class RoomRepo {
 		// if player count is odd, the last player is not paired
 		const lastRound = room.rounds.length ? room.rounds[room.rounds.length - 1] : undefined;
 		const sortedPlayers = players.data.sort(
-			(a, b) => this.getRelatesScore(a, lastRound) - this.getRelatesScore(b, lastRound)
+			(a, b) => this.getRelatesScore(b, lastRound) - this.getRelatesScore(a, lastRound)
 		);
 		if (sortedPlayers.length % 2 === 1) {
 			sortedPlayers.pop();
 		}
 
+		const { data, error }: PostgrestSingleResponse<Round> = await this.supabase
+			.from('rounds')
+			.insert(round.dbValues)
+			.select()
+			.single();
+		if (error) throw error;
+
 		const matchIds: string[] = [];
 		for (let i = 0; i < sortedPlayers.length; i += 2) {
-			const match = new Match(round, sortedPlayers[i], sortedPlayers[i + 1]);
+			const match = new Match({ round, player1: sortedPlayers[i], player2: sortedPlayers[i + 1] });
 			const { error } = await this.supabase.from('matches').insert(match.dbValues);
 			if (error) {
 				// rollback
@@ -136,4 +133,4 @@ class RoomRepo {
 	}
 }
 
-export const roomRepo = new RoomRepo(supabase);
+export const roomRepo = new RoomRepository(supabase);

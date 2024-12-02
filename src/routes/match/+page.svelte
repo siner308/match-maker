@@ -2,7 +2,7 @@
 	import Loading from '../../components/Loading.svelte';
 	import {
 		addPlayer,
-		changePlayerActiveState,
+		changePlayerActiveState, updatePlayerScore,
 		getPlayersByRoomId,
 		getRoomDetailsByRoomId,
 		startRound
@@ -25,7 +25,7 @@
 		const target = e.target as HTMLInputElement;
 		newPlayerName = target.value;
 	};
-	const onSubmitAddPlayer = async (e: SubmitEvent) => {
+	const onSubmitAddPlayer = (e: SubmitEvent) => {
 		e.preventDefault();
 		if (!$room.isSuccess || !$room.data.id || !newPlayerName) {
 			return;
@@ -35,7 +35,7 @@
 	};
 
 	const startRoundMutation = startRound(roomId);
-	const onStartRound = async () => {
+	const onStartRound = () => {
 		if (!$room.isSuccess) {
 			return;
 		}
@@ -43,12 +43,25 @@
 	};
 
 	const changePlayerActiveStateMutation = changePlayerActiveState(roomId);
-	const onChangePlayerActiveState = async (playerId: string, disabled: boolean) => {
+	const onChangePlayerActiveState = (playerId: string, disabled: boolean) => {
 		if (!$room.isSuccess) {
 			return;
 		}
 		$changePlayerActiveStateMutation.mutate({ playerId, disabled });
 	};
+
+	const changePlayerScoreMutation = updatePlayerScore(roomId);
+	const onChangePlayerScore = (matchId: string, playerId: string) => {
+    if (!$room.isSuccess) {
+      return;
+    }
+		return (e: Event) => {
+			const target = e.target as HTMLInputElement;
+			const score = parseInt(target.value);
+			console.log('onChangePlayerScore', matchId, playerId, score);
+      $changePlayerScoreMutation.mutate({ matchId, playerId, score });
+		}
+  };
 </script>
 
 <div class="flex flex-col gap-8 items-center">
@@ -64,8 +77,8 @@
 	{/if}
 	{#if $room.isSuccess}
 		<h1>{$room.data.name}</h1>
-		<div class="flex gap-4 justify-center">
-			{#each $room.data.rounds as round}
+		<div class="flex gap-4 justify-center flex-wrap">
+			{#each $room.data.rounds as round (round.id)}
 				<div class="flex flex-col gap-4 m-2"
 						 class:is_finished_round={round.matches.every(match => Match.isFinished(match))}
 						 class:is_not_finished_round={round.matches.some(match => !Match.isFinished(match))}
@@ -73,7 +86,7 @@
 					<h2 class="text-2xl font-bold">Round {round.round_number}</h2>
 					<!--            match progress bar-->
 					<div class="flex gap-1 h-4">
-						{#each round.matches as match}
+						{#each round.matches as match (match.id)}
 							<div class="h-full" style="width: {100 / round.matches.length}%">
 								{#if Match.isFinished(match)}
 									<div class="bg-green-500 w-full h-full"></div>
@@ -83,20 +96,20 @@
 							</div>
 						{/each}
 					</div>
-					{#each round.matches as match}
+					{#each round.matches as match (match.id)}
 						<div
 							class="flex flex-col gap-2 bg-gray-300 p-2 rounded-xl w-40 mx-auto"
 							class:is_finished_match={Match.isFinished(match)}
 							class:is_not_finished_match={!Match.isFinished(match)}
 						>
-							<div class="px-2 w-full flex items-center justify-between">
+							<div class="px-2 w-full flex items-center justify-between gap-2">
 								<p class="text-lg">{match.player1.name}</p>
-								<p class="text-2xl">{match.player1_score ?? '-'}</p>
+								<input type="number" class="text-right rounded w-12 text-xl" value={match.player1_score} placeholder="-" oninput={onChangePlayerScore(match.id, match.player1.id)} />
 							</div>
 							<hr />
-							<div class="px-2 w-full flex items-center justify-between">
+							<div class="px-2 w-full flex items-center justify-between gap-2">
 								<p class="text-lg">{match.player2.name}</p>
-								<p class="text-2xl">{match.player2_score ?? '-'}</p>
+								<input type="number" class="text-right rounded w-12 text-xl" value={match.player2_score} placeholder="-" oninput={onChangePlayerScore(match.id, match.player2.id)} />
 							</div>
 
 						</div>
@@ -104,10 +117,10 @@
 				</div>
 			{/each}
 		</div>
-		<div class="my-auto">
+		<div class="flex w-full my-auto">
 			<button
 				id="start-round"
-				class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+				class="mx-auto max-w-80 w-full h-16 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-xl"
 				disabled={$room.data.rounds.some(round => round.matches.some(match => !Match.isFinished(match)))}
 				class:disabled={$room.data.rounds.some(round => round.matches.some(match => !Match.isFinished(match)))}
 				onclick={onStartRound}
@@ -128,7 +141,7 @@
 			<div>
 				<h2 class="text-2xl font-bold">Players</h2>
 				{#each $players.data as player (player.id)}
-					<div class="flex justify-between">
+					<div class="flex justify-between gap-4">
 						<div class={player.disabled ? 'text-gray-400' : ''}>{player.name}</div>
 						<div class="toggle">
 							<input
@@ -187,5 +200,6 @@
 
   .disabled {
     @apply bg-gray-500;
+		cursor: not-allowed;
   }
 </style>

@@ -4,7 +4,7 @@ export abstract class BaseEntity {
 	id: string;
 	created_at: Date;
 
-	constructor() {
+	protected constructor() {
 		this.id = uuid();
 		this.created_at = new Date();
 	}

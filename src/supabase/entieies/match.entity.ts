@@ -12,20 +12,19 @@ export class Match extends BaseEntity {
 	player2_id: string;
 	player2_score?: number;
 
-	constructor(round: Round, player1: Player, player2: Player) {
+	constructor(data: Partial<Match>) {
 		super();
-
-		this.round = round;
-		this.round_id = round.id;
-		this.player1 = player1;
-		this.player1_id = player1.id;
-		this.player2 = player2;
-		this.player2_id = player2.id;
+		Object.assign(this, data);
 	}
 
 	get dbValues() {
-		const { round: _, player1: __, player2: ___, ...values } = this;
-		return values;
+		const { round, player1, player2, ...values } = this;
+		return {
+			...values,
+			...(round?.id && { round_id: round.id }),
+			...(player1?.id && { player1_id: player1.id }),
+			...(player2?.id && { player2_id: player2.id })
+		};
 	}
 
 	static isFinished(data: Partial<Match>) {

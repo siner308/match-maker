@@ -4,6 +4,7 @@ import { roomRepo } from '../supabase/repositories/room.repo';
 import { Player } from '../supabase/entieies/player.entity';
 import { playerRepo } from '../supabase/repositories/player.repo';
 import { queryClient } from '../tanstack/query-client';
+import { matchRepo } from '../supabase/repositories/match.repo';
 
 export const createRoom = (onSuccess: (room: Room) => unknown) => {
 	return createMutation<Room, Error, string>({
@@ -82,6 +83,40 @@ export const changePlayerActiveState = (roomId: string) => {
 		},
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ['players', roomId] }).catch(console.error);
+		}
+	});
+};
+
+export const updatePlayerScore = (roomId: string) => {
+	return createMutation({
+		mutationFn: async ({
+			matchId,
+			playerId,
+			score
+		}: {
+			playerId: string;
+			matchId: string;
+			score: number;
+		}) => {
+			const match = await matchRepo.findByMatchIdWithPlayers(matchId);
+			if (!match) {
+				debugger;
+				throw new Error(`Match with id ${matchId} not found`);
+			}
+			if (match.player1?.id !== playerId && match.player2?.id !== playerId) {
+				debugger;
+				throw new Error(`Player with id ${playerId} not found in match`);
+			}
+			if (match.player1.id === playerId) {
+				match.player1_score = score;
+			}
+			if (match.player2.id === playerId) {
+				match.player2_score = score;
+			}
+			await matchRepo.save(match).catch(console.error);
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ['rooms', roomId] }).catch(console.error);
 		}
 	});
 };

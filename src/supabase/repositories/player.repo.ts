@@ -2,7 +2,7 @@ import type { Player } from '../entieies/player.entity';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { supabase } from '../client';
 
-class PlayerRepo {
+class PlayerRepository {
 	constructor(private readonly supabase: SupabaseClient) {}
 
 	async save(player: Player): Promise<Player> {
@@ -48,4 +48,4 @@ class PlayerRepo {
 	}
 }
 
-export const playerRepo = new PlayerRepo(supabase);
+export const playerRepo = new PlayerRepository(supabase);

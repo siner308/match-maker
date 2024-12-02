@@ -19,8 +19,11 @@ export class Round extends BaseEntity {
 	}
 
 	get dbValues() {
-		const { room: _, matches: __, ...values } = this;
-		return values;
+		const { room, matches: __, ...values } = this;
+		return {
+			...values,
+			...(room?.id && { room_id: room.id })
+		};
 	}
 
 	static isFinished(round: Partial<Round>) {

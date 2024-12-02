@@ -8,7 +8,8 @@ import { queryClient } from '../tanstack/query-client';
 export const createRoom = (onSuccess: (room: Room) => unknown) => {
 	return createMutation<Room, Error, string>({
 		mutationFn: async (name) => {
-			const room = new Room({ name });
+			const room = new Room();
+			room.name = name;
 
 			if (await roomRepo.findByName(name)) {
 				throw new Error(`Room with name ${name} already exists`);

@@ -26,7 +26,14 @@ class PlayerRepo {
 		const { data, error } = await this.supabase.from('players').select('*').eq('room_id', roomId);
 		if (error) throw error;
 
-		data.sort((a, b) => a.name.localeCompare(b.name));
+		// sort by disabled, name
+		data.sort((a, b) => {
+			if (a.disabled === b.disabled) {
+				return a.name.localeCompare(b.name);
+			}
+			return a.disabled ? 1 : -1;
+		});
+
 		return data;
 	}
 }

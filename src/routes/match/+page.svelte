@@ -114,7 +114,9 @@
       <div>
         <h2 class="text-2xl font-bold">Players</h2>
         {#each $players.data as player}
-          <li>{player.name}</li>
+          <li
+            class={player.disabled ? 'text-gray-400' : ''}
+          >{player.name}</li>
         {/each}
       </div>
       <form onsubmit={onSubmitAddPlayer} class="h-10">
